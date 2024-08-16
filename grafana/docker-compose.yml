@@ -1,0 +1,123 @@
+services:
+  hydra:
+    image: oryd/hydra:v2.2.0
+    restart: unless-stopped
+    ports:
+      - "4444:4444"
+      - "4445:4445"
+      - "4446:4446"
+    environment:
+      SECRETS_SYSTEM: youReallyNeedToChangeThis
+      DSN: memory
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+      LOG_LEAK_SENSITIVE_VALUES: "true"
+      TRACING_PROVIDER: otel
+      TRACING_SERVICE_NAME: hydra
+      TRACING_PROVIDERS_OTLP_INSECURE: true
+      TRACING_PROVIDERS_OTLP_SAMPLING_SAMPLING_RATIO: 1
+      TRACING_PROVIDERS_OTLP_SERVER_URL: "collector:4318"
+    volumes:
+      - hydra:/tmp
+    entrypoint: []
+    command: sh -c "hydra serve all --dev > /tmp/hydra.log 2>&1"
+
+  collector:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.108.0
+    restart: unless-stopped
+    environment:
+      # See https://github.com/open-telemetry/opentelemetry-collector/blob/main/extension/ballastextension/README.md
+      GOMEMLIMIT: 384MiB
+    volumes:
+      - ./.docker/collector/config.yaml:/etc/otelcol-contrib/config.yaml
+
+  prometheus:
+    image: quay.io/prometheus/prometheus:v2.51.2
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--storage.tsdb.retention.time=1h"
+      - "--config.file=/etc/prometheus/prometheus.yaml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+      - "--web.route-prefix=/"
+      - "--web.enable-admin-api"
+      - "--web.enable-remote-write-receiver"
+      - "--enable-feature=native-histograms"
+      - "--enable-feature=exemplar-storage"
+      - "--enable-feature=otlp-write-receiver"
+    volumes:
+      - ./.docker/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yaml
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /dev/disk/:/dev/disk:ro
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_INSTALL_PLUGINS=grafana-pyroscope-app
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    volumes:
+      - ./.docker/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./.docker/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+
+  loki:
+    image: grafana/loki:3.1.0
+    restart: unless-stopped
+    command: [
+      "-config.file=/etc/loki/config.yaml",
+      "-target=all"
+    ]
+    volumes:
+      - ./.docker/loki/config.yaml:/etc/loki/config.yaml:ro
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    init: true
+    restart: unless-stopped
+    command: [
+      "-config.file=/etc/tempo/config.yaml"
+    ]
+    volumes:
+      - ./.docker/tempo/config.yaml:/etc/tempo/config.yaml:ro
+
+  pyroscope:
+    image: grafana/pyroscope:1.7.1
+    restart: unless-stopped
+
+  k6:
+    image: grafana/k6:0.52.0-with-browser
+    environment:
+      - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
+      - K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),min,max,med,avg,count,sum
+    volumes:
+      - .:/home/k6
+
+  promtail:
+    image: grafana/promtail:3.0.0
+    volumes:
+      - ./.docker/promtail/config.yaml:/etc/promtail/config.yaml
+      - hydra:/opt/log
+    command: [
+      "-config.file=/etc/promtail/config.yaml",
+      "-config.expand-env=true",
+    ]
+
+volumes:
+  hydra:

@@ -1,0 +1,51 @@
+apiVersion: 1
+
+datasources:
+  - name: Local Prometheus
+    uid: local-prometheus
+    type: prometheus
+    isDefault: true
+    url: http://prometheus:9090
+    editable: true
+
+  - name: Local Loki
+    uid: local-loki
+    type: loki
+    url: http://loki:3100
+    editable: true
+    jsonData:
+      maxLines: 1000
+
+  # See https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#example-file
+  - name: Local Tempo
+    uid: local-tempo
+    type: tempo
+    url: http://tempo:3200
+    editable: true
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: local-loki
+        spanStartTimeShift: '-5m'
+        spanEndTimeShift: '5m'
+        tags:
+          - key: service.name
+            value: service_name
+        filterByTraceID: true
+        filterBySpanID: true
+        customQuery: false
+      tracesToMetrics:
+        datasourceUid: local-prometheus
+        spanStartTimeShift: '5m'
+        spanEndTimeShift: '-5m'
+        tags:
+          - key: service.name
+            value: service_name
+
+  # See https://grafana.com/docs/grafana/next/datasources/pyroscope/#provision-the-pyroscope-data-source
+  - name: Local Pyroscope
+    uid: local-pyroscope
+    type: grafana-pyroscope-datasource
+    url: http://pyroscope:4040
+    editable: true
+    jsonData:
+      minStep: '15s'

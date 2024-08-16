@@ -1,0 +1,30 @@
+server:
+  http_listen_port: 3200
+
+distributor:
+  # this configuration will listen on all ports and protocols that tempo is capable of.
+  # the receives all come from the OpenTelemetry collector.  more configuration information can
+  # be found there: https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver
+  # for a production deployment you should only enable the receivers you need!
+  receivers:
+    otlp:
+      protocols:
+        http:
+        grpc:
+
+ingester:
+  # cut the headblock when this much time passes. this is being set for demo purposes and should probably be left alone normally
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    # overall Tempo trace retention. set for demo purposes
+    block_retention: 1h
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /tmp/tempo/wal
+    local:
+      path: /tmp/tempo/blocks
