@@ -5,8 +5,13 @@ services:
     ports:
       - "4444:4444"
       - "4445:4445"
-      - "4446:4446"
+      - "5555:5555"
     environment:
+      SERVE_COOKIES_SAME_SITE_MODE: Lax
+      URLS_SELF_ISSUER: http://127.0.0.1:4444
+      URLS_CONSENT: http://127.0.0.1:3001/consent
+      URLS_LOGIN: http://127.0.0.1:3001/login
+      URLS_LOGOUT: http://127.0.0.1:3001/logout
       SECRETS_SYSTEM: youReallyNeedToChangeThis
       DSN: memory
       LOG_LEVEL: info
@@ -21,6 +26,14 @@ services:
       - hydra:/tmp
     entrypoint: []
     command: sh -c "hydra serve all --dev > /tmp/hydra.log 2>&1"
+
+  consent:
+    image: oryd/hydra-login-consent-node:v2.2.0
+    environment:
+      - HYDRA_ADMIN_URL=http://hydra:4445
+    ports:
+      - "3001:3000"
+    restart: unless-stopped
 
   collector:
     image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.108.0
