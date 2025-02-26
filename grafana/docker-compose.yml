@@ -107,7 +107,7 @@ services:
       - K6_PROMETHEUS_RW_SERVER_URL=http://prometheus:9090/api/v1/write
       - K6_PROMETHEUS_RW_TREND_STATS=p(95),p(99),min,max,med,avg,count,sum
     volumes:
-      - .:/home/k6
+      - ./.docker/k6:/home/k6
 
   promtail:
     image: grafana/promtail:3.0.0
