@@ -1,0 +1,28 @@
+services:
+  hydra:
+    image: oryd/hydra:v2.2.0
+    restart: unless-stopped
+    ports:
+      - "4444:4444"
+      - "4445:4445"
+      - "5555:5555"
+    environment:
+      SERVE_COOKIES_SAME_SITE_MODE: Lax
+      URLS_SELF_ISSUER: http://127.0.0.1:4444
+      URLS_CONSENT: http://127.0.0.1:3000/consent
+      URLS_LOGIN: http://127.0.0.1:3000/login
+      URLS_LOGOUT: http://127.0.0.1:3000/logout
+      SECRETS_SYSTEM: youReallyNeedToChangeThis
+      DSN: memory
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+      LOG_LEAK_SENSITIVE_VALUES: "true"
+    command: serve all --dev
+
+  consent:
+    image: oryd/hydra-login-consent-node:v2.2.0
+    environment:
+      - HYDRA_ADMIN_URL=http://hydra:4445
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
