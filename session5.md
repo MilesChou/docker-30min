@@ -4,9 +4,9 @@
 $ docker run --rm -it redis:5 redis-cli
 $ docker run --rm -it redis:6 redis-cli
 
-$ docker run -d -p 3306:3306 mysql
-$ docker run -d -p 3306:3306 mariadb
-$ docker run -d -p 3306:3306 percona
+$ docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password mysql
+$ docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password mariadb
+$ docker run -d -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password percona
 ```
 
 ```
