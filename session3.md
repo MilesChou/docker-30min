@@ -4,7 +4,7 @@
 
 ```
 $ docker run -d --name my-web -p 8080:80 nginx:alpine
-$ docker exec -it my-web bash
+$ docker exec -it my-web sh
 # echo "hello world" > /usr/share/nginx/html/my-web.html
 $ docker rm -f my-web
 $ docker run -d --name my-web -p 8080:80 nginx:alpine
@@ -14,7 +14,7 @@ $ docker run -d --name my-web -p 8080:80 nginx:alpine
 
 ```
 $ echo "hello world" > ./my-web.html
-$ docker run --rm -it -p 8080:80 -v `pwd`/my-web.html:/usr/share/nginx/html/my-web.html nginx:alpine
+$ docker run --rm -it -p 8080:80 -v $(pwd)/my-web.html:/usr/share/nginx/html/my-web.html nginx:alpine
 ```
 
 ### 環境變數

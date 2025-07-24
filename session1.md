@@ -25,5 +25,5 @@ $ docker images
 $ docker pull busybox
 $ docker create -it --name mycontainer busybox
 $ docker start -i mycontainer
-$ docker ls -a
+$ docker ps -a
 ```
